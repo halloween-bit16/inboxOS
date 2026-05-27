@@ -1,30 +1,44 @@
-import { createClient } from '@supabase/supabase-js';
-import { NextResponse, NextRequest } from 'next/server';
+import { createClient } from '@supabase/supabase-js'
+import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(req: NextRequest) {
-  // Get auth token from cookies
-  const token = req.cookies.get('sb-access-token')?.value;
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({
+    request,
+  })
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   // Protected routes
-  const protectedPaths = ['/dashboard'];
+  const protectedPaths = ['/dashboard']
   const isProtectedPath = protectedPaths.some(path =>
-    req.nextUrl.pathname.startsWith(path)
-  );
+    request.nextUrl.pathname.startsWith(path)
+  )
 
-  if (isProtectedPath && !token) {
-    const redirectUrl = new URL('/login', req.url);
-    return NextResponse.redirect(redirectUrl);
+  if (isProtectedPath && !user) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
   }
 
   // Redirect logged in users away from login page
-  if (req.nextUrl.pathname === '/login' && token) {
-    const redirectUrl = new URL('/dashboard', req.url);
-    return NextResponse.redirect(redirectUrl);
+  if (request.nextUrl.pathname === '/login' && user) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/dashboard'
+    return NextResponse.redirect(url)
   }
 
-  return NextResponse.next();
+  return response
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login'],
-};
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
+}
