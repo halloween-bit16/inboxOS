@@ -30,6 +30,11 @@ export function AppSidebar() {
   const pathname = usePathname();
   const { signOut } = useAuth();
 
+  const handleSignOut = async () => {
+    await signOut();
+    window.location.href = "/login";
+  };
+
   return (
     <div className="flex h-full w-64 flex-col bg-slate-900 dark:bg-slate-950">
       {/* Logo */}
@@ -64,16 +69,9 @@ export function AppSidebar() {
 
       {/* Bottom section */}
       <div className="border-t border-slate-800 p-3">
-        <Link
-          href="/settings"
-          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-400 hover:bg-slate-800/50 hover:text-white transition-all"
-        >
-          <Settings className="h-5 w-5" />
-          Settings
-        </Link>
         <Button
           variant="ghost"
-          onClick={signOut}
+          onClick={handleSignOut}
           className="w-full justify-start gap-3 text-slate-400 hover:bg-slate-800/50 hover:text-white"
         >
           <LogOut className="h-5 w-5" />

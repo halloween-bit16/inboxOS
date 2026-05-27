@@ -2,14 +2,8 @@ import { createClient } from '@supabase/supabase-js';
 import { NextResponse, NextRequest } from 'next/server';
 
 export async function middleware(req: NextRequest) {
-  const res = NextResponse.next();
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { auth: { persistSession: false } }
-  );
-
-  const { data: { session } } = await supabase.auth.getSession();
+  // Get auth token from cookies
+  const token = req.cookies.get('sb-access-token')?.value;
 
   // Protected routes
   const protectedPaths = ['/dashboard'];
@@ -17,18 +11,18 @@ export async function middleware(req: NextRequest) {
     req.nextUrl.pathname.startsWith(path)
   );
 
-  if (isProtectedPath && !session) {
+  if (isProtectedPath && !token) {
     const redirectUrl = new URL('/login', req.url);
     return NextResponse.redirect(redirectUrl);
   }
 
   // Redirect logged in users away from login page
-  if (req.nextUrl.pathname === '/login' && session) {
+  if (req.nextUrl.pathname === '/login' && token) {
     const redirectUrl = new URL('/dashboard', req.url);
     return NextResponse.redirect(redirectUrl);
   }
 
-  return res;
+  return NextResponse.next();
 }
 
 export const config = {
